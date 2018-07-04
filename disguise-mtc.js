@@ -118,7 +118,7 @@ instance.prototype.config_fields = function () {
 			width: 6,
 			default: '54321',
 			regex: self.REGEX_PORT
-		},
+		}
 
 	]
 };
@@ -137,9 +137,79 @@ instance.prototype.destroy = function() {
 instance.prototype.actions = function(system) {
 	var self = this;
 	self.system.emit('instance_actions', self.id, {
-		'Test': {
-			label: 'Test'
+		'timecode': {
+			label: 'Track Command w/timecode',
+			options: [
+				{
+					type:  'dropdown',
+					label: 'Command',
+					id:    'command',
+					default: 'playSection',
+					choices: [
+						{ id: 'play',  label: 'Play' },
+						{ id: 'playSection', label: 'Play Section' },
+						{ id: 'stop',  label: 'Stop' },
+						{ id: 'pause', label: 'Pause' },
+					]
+				},
+				{
+					type:  'textinput',
+					label: 'Player (Transport Manager)',
+					id:    'player',
+					default: '',
+					regex: self.REGEX_SOMETHING
+				},
+				{
+					type:  'textinput',
+					label: 'Transition time (secs)',
+					id:    'player',
+					default: '',
+					regex: self.REGEX_FLOAT_OR_INT
+				},
+				{
+					type: 'textinput',
+					label: 'Location (optional)',
+					id: 'location',
+					default: '00:00:00:00',
+					regex: self.REGEX_TIMECODE
+				}
+			]
 		},
+		'notimecode': {
+			label: 'Track Command',
+			options: [
+
+				{
+					type: 'dropdown',
+					label: 'Command',
+					id: 'command',
+					default: 'play',
+					choices: [
+						{ id: 'play',  label: 'Play' },
+						{ id: 'playSection', label: 'Play Section' },
+						{ id: 'loop',  label: 'Loop section' },
+						{ id: 'stop',  label: 'Stop' },
+					]
+				},
+
+				{
+					type: 'textinput',
+					label: 'Player/transport name',
+					id: 'player',
+					default: '',
+					regex: self.REGEX_SOMETHING
+				},
+
+				{
+					type: 'textinput',
+					label: 'Transition time (secs)',
+					id: 'transition',
+					default: '0',
+					regex: self.REGEX_FLOAT_OR_INT
+				},
+
+			]
+		}
 	});
 }
 
@@ -155,13 +225,28 @@ instance.prototype.action = function(action) {
 
 		debug('sending tcp',cmd,"to",self.config.host);
 
+
+		var track_command = {};
+
+		if (action.action == 'notimecode') {
+			track_command = {
+				"command": action.options.command,
+				"player": action.options.player,
+				"transition": action.options.transiton
+			};
+		}
+		else if (action.action == 'timecode') {
+			track_command = {
+				"location": action.options.location,
+				"command": action.options.command,
+				"player": action.options.player,
+				"transition": action.options.transiton
+			};
+		}
+
 		var command = {
 			"request":self.request_id++,
-			"track_command":{
-				"command":"play",
-				"player":"transport 2",
-				"transition":1
-			}
+			"track_command":track_command
 		};
 
 		var cmd = JSON.stringify(command) + "\n";
