@@ -260,11 +260,5 @@ instance.prototype.action = function(action) {
 	}
 };
 
-instance.module_info = {
-	label: 'Disguise Multi Transport',
-	id: 'disguise-mtc',
-	version: '0.0.1'
-};
-
 instance_skel.extendedBy(instance);
 exports = module.exports = instance;
