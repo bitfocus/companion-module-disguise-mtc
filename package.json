@@ -1,17 +1,19 @@
 {
-  "name": "disguise-mtc",
-  "version": "1.0.0",
+	"name": "disguise-mtc",
+	"version": "1.0.1",
 	"api_version": "1.0.0",
-	"keywords": [ "Media Server" ],
+	"keywords": [
+		"Media Server"
+	],
 	"manufacturer": "disguise",
-	"product": "Multi Transport Control",
+	"product": "Disguise - Multi Transport Control",
 	"shortname": "d3mtc",
 	"homepage": "https://www.disguise.one/en/",
-  "description": "Disguise MultiTransport Control",
-  "main": "disguise-mtc.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "William Viker <william@bitfocus.io>",
-  "license": "ISC"
+	"description": "Disguise MultiTransport Control",
+	"main": "disguise-mtc.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"author": "William Viker <william@bitfocus.io>",
+	"license": "MIT"
 }
