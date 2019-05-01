@@ -1,11 +1,11 @@
 {
 	"name": "disguise-mtc",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"api_version": "1.0.0",
 	"keywords": [
 		"Media Server"
 	],
-	"manufacturer": "disguise",
+	"manufacturer": "Disguise",
 	"product": "Disguise - Multi Transport Control",
 	"shortname": "d3mtc",
 	"homepage": "https://www.disguise.one/en/",
