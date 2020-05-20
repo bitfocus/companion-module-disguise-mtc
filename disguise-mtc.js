@@ -138,7 +138,7 @@ instance.prototype.actions = function(system) {
 	var self = this;
 	self.system.emit('instance_actions', self.id, {
 		'timecode': {
-			label: 'Track Command w/timecode',
+			label: 'Goto timecode',
 			options: [
 				{
 					type:  'dropdown',
@@ -148,8 +148,6 @@ instance.prototype.actions = function(system) {
 					choices: [
 						{ id: 'play',  label: 'Play' },
 						{ id: 'playSection', label: 'Play Section' },
-						{ id: 'stop',  label: 'Stop' },
-						{ id: 'pause', label: 'Pause' },
 					]
 				},
 				{
@@ -161,8 +159,14 @@ instance.prototype.actions = function(system) {
 				},
 				{
 					type:  'textinput',
+					label: 'Track (Track name)',
+					id:    'track',
+					regex: self.REGEX_SOMETHING
+				},
+				{
+					type:  'textinput',
 					label: 'Transition time (secs)',
-					id:    'player',
+					id:    'transition',
 					default: '',
 					regex: self.REGEX_FLOAT_OR_INT
 				},
@@ -172,6 +176,48 @@ instance.prototype.actions = function(system) {
 					id: 'location',
 					default: '00:00:00:00',
 					regex: self.REGEX_TIMECODE
+				}
+			]
+		},
+		'cue': {
+			label: 'Goto cue',
+			options: [
+				{
+					type:  'dropdown',
+					label: 'Command',
+					id:    'command',
+					default: 'playSection',
+					choices: [
+						{ id: 'play',  label: 'Play' },
+						{ id: 'playSection', label: 'Play Section' },
+					]
+				},
+				{
+					type:  'textinput',
+					label: 'Player (Transport Manager)',
+					id:    'player',
+					default: '',
+					regex: self.REGEX_SOMETHING
+				},
+				{
+					type:  'textinput',
+					label: 'Track (Track name)',
+					id:    'track',
+					regex: self.REGEX_SOMETHING
+				},
+				{
+					type:  'textinput',
+					label: 'Transition time (secs)',
+					id:    'transition',
+					default: '',
+					regex: self.REGEX_FLOAT_OR_INT
+				},
+				{
+					type: 'textinput',
+					label: 'CUE',
+					id: 'location',
+					default: '1.0.0',
+					regex: '/^\\d+(\\.\\d+(\\.\\d+)?)?$/'
 				}
 			]
 		},
@@ -235,10 +281,22 @@ instance.prototype.action = function(action) {
 				"transition": action.options.transiton
 			};
 		}
+
+		else if (action.action == 'cue') {
+			track_command = {
+				"location": "CUE " + action.options.location,
+				"command": action.options.command,
+				"track": action.options.track,
+				"player": action.options.player,
+				"transition": action.options.transiton
+			};
+		}
+
 		else if (action.action == 'timecode') {
 			track_command = {
 				"location": action.options.location,
 				"command": action.options.command,
+				"track": action.options.track,
 				"player": action.options.player,
 				"transition": action.options.transiton
 			};
@@ -248,8 +306,8 @@ instance.prototype.action = function(action) {
 			"request":self.request_id++,
 			"track_command":track_command
 		};
-
 		var cmd = JSON.stringify(command) + "\n";
+		console.log("COMMAND", cmd)
 
 		if (self.socket !== undefined && self.socket.connected) {
 			self.socket.send(cmd);
