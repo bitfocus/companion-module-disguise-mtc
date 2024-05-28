@@ -12,11 +12,6 @@ class GenericTcpUdpInstance extends InstanceBase {
 	}
 
 	async configUpdated(config) {
-		if (this.udp) {
-			this.udp.destroy()
-			delete this.udp
-		}
-
 		if (this.socket) {
 			this.socket.destroy()
 			delete this.socket
@@ -24,24 +19,14 @@ class GenericTcpUdpInstance extends InstanceBase {
 
 		this.config = config
 
-		if (this.config.prot == 'tcp') {
-			this.init_tcp()
+		this.init_tcp()
 
-			this.init_tcp_variables()
-		}
-
-		if (this.config.prot == 'udp') {
-			this.init_udp()
-
-			this.setVariableDefinitions([])
-		}
+		this.init_tcp_variables()
 	}
 
 	async destroy() {
 		if (this.socket) {
 			this.socket.destroy()
-		} else if (this.udp) {
-			this.udp.destroy()
 		} else {
 			this.updateStatus(InstanceStatus.Disconnected)
 		}
@@ -50,36 +35,6 @@ class GenericTcpUdpInstance extends InstanceBase {
 	// Return config fields for web config
 	getConfigFields() {
 		return ConfigFields
-	}
-
-	init_udp() {
-		if (this.udp) {
-			this.udp.destroy()
-			delete this.udp
-		}
-
-		this.updateStatus(InstanceStatus.Connecting)
-
-		if (this.config.host) {
-			this.udp = new UDPHelper(this.config.host, this.config.port)
-			this.updateStatus(InstanceStatus.Ok)
-
-			this.udp.on('error', (err) => {
-				this.updateStatus(InstanceStatus.ConnectionFailure, err.message)
-				this.log('error', 'Network error: ' + err.message)
-			})
-
-			// If we get data, thing should be good
-			this.udp.on('listening', () => {
-				this.updateStatus(InstanceStatus.Ok)
-			})
-
-			this.udp.on('status_change', (status, message) => {
-				this.updateStatus(status, message)
-			})
-		} else {
-			this.updateStatus(InstanceStatus.BadConfig)
-		}
 	}
 
 	init_tcp() {

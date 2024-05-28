@@ -1,7 +1,7 @@
 {
-	"id": "disguise-mtc",
-	"name": "disguise-mtc",
-	"shortname": "d3-mtc",
+	"id": "disguise-mtc-id",
+	"name": "disguise-mtc-name",
+	"shortname": "d3-mtc-shortname",
 	"description": "Deisguise MultiTranpsort Control",
 	"version": "2.0.0",
 	"license": "MIT",
