@@ -5,6 +5,40 @@ const PLAY_MODES = [
 	{ id: 'stop', label: 'Stop' },
 ]
 
+const ACTION_OPTIONS = [
+	{
+		type: 'dropdown',
+		label: 'Command',
+		id: 'command',
+		default: 'playSection',
+		choices: PLAY_MODES
+	},
+	{
+		type: 'textinput',
+		label: 'Transport',
+		id: 'player',
+		default: '',
+		tooltip: 'Transport to target, ex: "default"',
+		regex: '/.*/'
+	},
+	{
+		type: 'textinput',
+		label: 'Track',
+		id: 'track',
+		default: '',
+		tooltip: 'Track to target, ex: "Track 1"',
+		regex: '/.*/'
+	},
+	{
+		type: 'textinput',
+		label: 'Target',
+		id: 'target',
+		tooltip: 'Format as CUE number (\'1\', \'1.2\', or \'1.2.3\') or Timecode (\'00:00:00:00\').',
+		default: '1.0.0',
+		regex: '/^\\d+(\\.\\d+(\\.\\d+)?)?$|^\\d{2}:\\d{2}:\\d{2}:\\d{2}$/'
+	}
+]
+
 function sendCommand(self, formattedCommand) {
 	const sendBuf = Buffer.from(JSON.stringify(formattedCommand) + '\n', 'latin1')
 
@@ -34,37 +68,7 @@ export function getActionDefinitions(self) {
 	return {
 		GotoCue: {
 			name: "Go To Cue",
-			options: [
-				{
-					type: 'dropdown',
-					label: 'Command',
-					id: 'command',
-					default: 'playSection',
-					choices: PLAY_MODES
-				},
-				{
-					type: 'textinput',
-					label: 'Transport',
-					id: 'player',
-					default: '',
-					regex: '/.*/'
-				},
-				{
-					type: 'textinput',
-					label: 'Track',
-					id: 'track',
-					default: '',
-					regex: '/.*/'
-				},
-				{
-					type: 'textinput',
-					label: 'Target',
-					id: 'target',
-					tooltip: 'Format as CUE number (\'1\', \'1.2\', or \'1.2.3\') or Timecode (\'00:00:00:00\').',
-					default: '1.0.0',
-					regex: '/^\\d+(\\.\\d+(\\.\\d+)?)?$|^\\d{2}:\\d{2}:\\d{2}:\\d{2}$/'
-				}
-			],
+			options: ACTION_OPTIONS,
 			callback: async (action) => {
 				const player = await self.parseVariablesInString(action.options.player)
 				const command = await self.parseVariablesInString(action.options.command)
@@ -93,27 +97,7 @@ export function getActionDefinitions(self) {
 		GotoCueXFTime: {
 			name: "Go To Cue: Crossfade (Time)",
 			options: [
-				{
-					type: 'dropdown',
-					label: 'Command',
-					id: 'command',
-					default: 'playSection',
-					choices: PLAY_MODES
-				},
-				{
-					type: 'textinput',
-					label: 'Transport',
-					id: 'player',
-					default: '',
-					regex: '/.*/'
-				},
-				{
-					type: 'textinput',
-					label: 'Track',
-					id: 'track',
-					default: '',
-					regex: '/.*/'
-				},
+				...ACTION_OPTIONS,
 				{
 					type: 'textinput',
 					label: 'Transition time (Seconds)',
@@ -121,14 +105,6 @@ export function getActionDefinitions(self) {
 					default: '1',
 					regex: '/^\\d+(\\.\\d+)?$/', // positive float
 				},
-				{
-					type: 'textinput',
-					label: 'Target',
-					id: 'target',
-					default: '1.0.0',
-					tooltip: 'Format as CUE number (\'1\', \'1.2\', or \'1.2.3\') or Timecode (\'00:00:00:00\').',
-					regex: '/^\\d+(\\.\\d+(\\.\\d+)?)?$|^\\d{2}:\\d{2}:\\d{2}:\\d{2}$/'
-				}
 			],
 			callback: async (action) => {
 				const player = await self.parseVariablesInString(action.options.player)
@@ -160,27 +136,7 @@ export function getActionDefinitions(self) {
 		GotoCueXFTrackSection: {
 			name: "Go To Cue: Crossfade (Track Section)",
 			options: [
-				{
-					type: 'dropdown',
-					label: 'Command',
-					id: 'command',
-					default: 'playSection',
-					choices: PLAY_MODES
-				},
-				{
-					type: 'textinput',
-					label: 'Transport',
-					id: 'player',
-					default: '',
-					regex: '/.*/'
-				},
-				{
-					type: 'textinput',
-					label: 'Track',
-					id: 'track',
-					default: '',
-					regex: '/.*/'
-				},
+				...ACTION_OPTIONS,
 				{
 					type: 'textinput',
 					label: 'Transition Track',
@@ -195,14 +151,6 @@ export function getActionDefinitions(self) {
 					default: '',
 					regex: '/.*/'
 				},
-				{
-					type: 'textinput',
-					label: 'Target',
-					id: 'target',
-					default: '1.0.0',
-					tooltip: 'Format as CUE number (\'1\', \'1.2\', or \'1.2.3\') or Timecode (\'00:00:00:00\').',
-					regex: '/^\\d+(\\.\\d+(\\.\\d+)?)?$|^\\d{2}:\\d{2}:\\d{2}:\\d{2}$/'
-				}
 			],
 			callback: async (action) => {
 				const player = await self.parseVariablesInString(action.options.player)
@@ -235,22 +183,8 @@ export function getActionDefinitions(self) {
 		},
 		TransportCommand: {
 			name: "Transport Command",
-			options: [
-				{
-					type: 'dropdown',
-					label: 'Command',
-					id: 'command',
-					default: 'playSection',
-					choices: PLAY_MODES
-				},
-				{
-					type: 'textinput',
-					label: 'Player (Transport manager)',
-					id: 'player',
-					default: '',
-					regex: '/.*/'
-				},
-			],
+			options: ACTION_OPTIONS.slice(0,2),
+
 			callback: async (action) => {
 				const player = await self.parseVariablesInString(action.options.player)
 				const command = await self.parseVariablesInString(action.options.command)

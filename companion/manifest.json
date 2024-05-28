@@ -1,9 +1,9 @@
 {
-	"id": "disguise-mtc-id",
-	"name": "disguise-mtc-name",
-	"shortname": "d3-mtc-shortname",
-	"description": "Deisguise MultiTranpsort Control",
-	"version": "2.0.0",
+	"id": "disguise-mtc",
+	"name": "disguise-multi-transport-control",
+	"shortname": "disguise-mtc",
+	"description": "Deisguise Multi-Transport Control",
+	"version": "3.0.0",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-disguise-mtc.git",
 	"bugs": "https://github.com/bitfocus/companion-module-disguise-mtc/issues",
@@ -24,7 +24,7 @@
 		"apiVersion": "1.0.0",
 		"entrypoint": "../main.js"
 	},
-	"manufacturer": "Disguise-TCB",
-	"products": ["MTC"],
+	"manufacturer": "Disguise",
+	"products": ["Multi-Transport Control"],
 	"keywords": ["Media Server"]
 }

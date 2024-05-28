@@ -1,6 +1,6 @@
 {
 	"name": "disguise-mtc-packagename",
-	"version": "2.1.2",
+	"version": "3.0.0",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {

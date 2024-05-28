@@ -1,8 +1,8 @@
-import { InstanceBase, InstanceStatus, runEntrypoint, TCPHelper, UDPHelper } from '@companion-module/base'
+import { InstanceBase, InstanceStatus, runEntrypoint, TCPHelper } from '@companion-module/base'
 import { ConfigFields } from './config.js'
 import { getActionDefinitions } from './actions.js'
 
-class GenericTcpUdpInstance extends InstanceBase {
+class DisguiseMultiTransport extends InstanceBase {
 	async init(config) {
 		this.config = config
 
@@ -20,8 +20,6 @@ class GenericTcpUdpInstance extends InstanceBase {
 		this.config = config
 
 		this.init_tcp()
-
-		this.init_tcp_variables()
 	}
 
 	async destroy() {
@@ -74,12 +72,6 @@ class GenericTcpUdpInstance extends InstanceBase {
 			this.updateStatus(InstanceStatus.BadConfig)
 		}
 	}
-
-	init_tcp_variables() {
-		this.setVariableDefinitions([{ name: 'Last TCP Response', variableId: 'tcp_response' }])
-
-		this.setVariableValues({ tcp_response: '' })
-	}
 }
 
-runEntrypoint(GenericTcpUdpInstance, [])
+runEntrypoint(DisguiseMultiTransport, [])
