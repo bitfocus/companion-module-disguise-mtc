@@ -1,12 +1,3 @@
-const CHOICES_END = [
-	{ id: '', label: 'None' },
-	{ id: '\n', label: 'LF - \\n (Common UNIX/Mac)' },
-	{ id: '\r\n', label: 'CRLF - \\r\\n (Common Windows)' },
-	{ id: '\r', label: "CR - \\r (1970's RS232 terminal)" },
-	{ id: '\x00', label: 'NULL - \\x00 (Can happen)' },
-	{ id: '\n\r', label: 'LFCR - \\n\\r (Just stupid)' },
-]
-
 const PLAY_MODES = [
 	{ id: 'play', label: 'Play' },
 	{ id: 'playSection', label: 'Play Section' },
@@ -26,6 +17,19 @@ function sendCommand(self, formattedCommand) {
 	}
 }
 
+function parseLocationRegex(location) {
+	const cueRegex = /^\d+(\.\d+){0,2}$/ // matches cue numbers like 1, 1.0, 1.0.0
+	const timecodeRegex = /^\d{2}:\d{2}:\d{2}:\d{2}$/ // matches timecodes like 00:00:00:00
+
+	if (cueRegex.test(location)) {
+		return 'CUE ' + location
+	} else if (timecodeRegex.test(location)) {
+		return location
+	} else {
+		throw new Error('Invalid target format: ' + location)
+	}
+}
+
 export function getActionDefinitions(self) {
 	return {
 		GotoCue: {
@@ -40,31 +44,39 @@ export function getActionDefinitions(self) {
 				},
 				{
 					type: 'textinput',
-					label: 'Player (Transport manager)',
+					label: 'Transport',
 					id: 'player',
 					default: '',
 					regex: '/.*/'
 				},
 				{
 					type: 'textinput',
-					label: 'Track (Track name)',
+					label: 'Track',
 					id: 'track',
 					default: '',
 					regex: '/.*/'
 				},
 				{
 					type: 'textinput',
-					label: 'CUE',
-					id: 'cue',
+					label: 'Target',
+					id: 'target',
+					tooltip: 'Format as CUE number (\'1\', \'1.2\', or \'1.2.3\') or Timecode (\'00:00:00:00\').',
 					default: '1.0.0',
-					regex: '/^\\d+(\\.\\d+(\\.\\d+)?)?$/'
+					regex: '/^\\d+(\\.\\d+(\\.\\d+)?)?$|^\\d{2}:\\d{2}:\\d{2}:\\d{2}$/'
 				}
 			],
 			callback: async (action) => {
 				const player = await self.parseVariablesInString(action.options.player)
 				const command = await self.parseVariablesInString(action.options.command)
 				const track = await self.parseVariablesInString(action.options.track)
-				const location = await self.parseVariablesInString("CUE " + action.options.cue)
+				let location
+
+				try {
+					location = await parseLocationRegex(action.options.target)
+				} catch (error) {
+					self.log('error', error.message)
+					return
+				}
 	
 				const formattedCommand = {
 					track_command: {
@@ -90,14 +102,14 @@ export function getActionDefinitions(self) {
 				},
 				{
 					type: 'textinput',
-					label: 'Player (Transport manager)',
+					label: 'Transport',
 					id: 'player',
 					default: '',
 					regex: '/.*/'
 				},
 				{
 					type: 'textinput',
-					label: 'Track (Track name)',
+					label: 'Track',
 					id: 'track',
 					default: '',
 					regex: '/.*/'
@@ -106,23 +118,31 @@ export function getActionDefinitions(self) {
 					type: 'textinput',
 					label: 'Transition time (Seconds)',
 					id: 'time',
-					default: '0',
+					default: '1',
 					regex: '/^\\d+(\\.\\d+)?$/', // positive float
 				},
 				{
 					type: 'textinput',
-					label: 'CUE',
-					id: 'cue',
+					label: 'Target',
+					id: 'target',
 					default: '1.0.0',
-					regex: '/^\\d+(\\.\\d+(\\.\\d+)?)?$/'
+					tooltip: 'Format as CUE number (\'1\', \'1.2\', or \'1.2.3\') or Timecode (\'00:00:00:00\').',
+					regex: '/^\\d+(\\.\\d+(\\.\\d+)?)?$|^\\d{2}:\\d{2}:\\d{2}:\\d{2}$/'
 				}
 			],
 			callback: async (action) => {
 				const player = await self.parseVariablesInString(action.options.player)
 				const command = await self.parseVariablesInString(action.options.command)
 				const track = await self.parseVariablesInString(action.options.track)
-				const location = await self.parseVariablesInString("CUE " + action.options.cue)
 				const transition = parseFloat(await self.parseVariablesInString(action.options.time))
+				let location
+
+				try {
+					location = await parseLocationRegex(action.options.target)
+				} catch (error) {
+					self.log('error', error.message)
+					return
+				}
 	
 				const formattedCommand = {
 					track_command: {
@@ -149,14 +169,14 @@ export function getActionDefinitions(self) {
 				},
 				{
 					type: 'textinput',
-					label: 'Player (Transport manager)',
+					label: 'Transport',
 					id: 'player',
 					default: '',
 					regex: '/.*/'
 				},
 				{
 					type: 'textinput',
-					label: 'Track (Track name)',
+					label: 'Track',
 					id: 'track',
 					default: '',
 					regex: '/.*/'
@@ -177,19 +197,27 @@ export function getActionDefinitions(self) {
 				},
 				{
 					type: 'textinput',
-					label: 'CUE',
-					id: 'cue',
+					label: 'Target',
+					id: 'target',
 					default: '1.0.0',
-					regex: '/^\\d+(\\.\\d+(\\.\\d+)?)?$/'
+					tooltip: 'Format as CUE number (\'1\', \'1.2\', or \'1.2.3\') or Timecode (\'00:00:00:00\').',
+					regex: '/^\\d+(\\.\\d+(\\.\\d+)?)?$|^\\d{2}:\\d{2}:\\d{2}:\\d{2}$/'
 				}
 			],
 			callback: async (action) => {
 				const player = await self.parseVariablesInString(action.options.player)
 				const command = await self.parseVariablesInString(action.options.command)
 				const track = await self.parseVariablesInString(action.options.track)
-				const location = await self.parseVariablesInString("CUE " + action.options.cue)
 				const transitionTrack = await self.parseVariablesInString(action.options.transitionTrack)
 				const transitionSection = await self.parseVariablesInString(action.options.transitionSection)
+				let location
+
+				try {
+					location = await parseLocationRegex(action.options.target)
+				} catch (error) {
+					self.log('error', error.message)
+					return
+				}
 
 				const formattedCommand = {
 					track_command: {
