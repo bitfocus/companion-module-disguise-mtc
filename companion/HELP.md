@@ -1,32 +1,12 @@
-# Generic TCP and UDP module
+# Disguise Multi Event Transport Control
+For more details on the protocol, visit `https://help.disguise.one/en/Content/Configuring/Transports/Multi-Transport.htm`
 
-A generic module for performing simple TCP and UDP requests
+Disguise provides a way to gather key information on the status of a Disguise session whilst also providing some basic timeline control.
 
-If you are using this plugin, you are trying to control some device or software that is not directly supported yet, and we would therefore really appreciate if you made a module request for it here:
+All commands are formatted in JSON and sent over the telnet protocol.
 
-<https://github.com/bitfocus/companion-module-requests/issues>
-
-Many more internal variables and feedbacks are possible specific modules and more people will get to benefit from these in the future, thanks.
-
-## Configuration
-
-| Option                | Description                                                     |
-| --------------------- | --------------------------------------------------------------- |
-| Target IP             | Destination Host name / IP                                      |
-| Target Port           | Destination port                                                |
-| TCP/UDP               | Connection protocol to use                                      |
-| Save TCP Response*    | Option to save the last response received via TCP               |
-| Convert TCP Response* | Optionally convert response to 'String' or 'Hex' encoded string |
-
-\* only available if protocol is set to TCP
-
-## Actions
-
-| Action           | Description                                                                   |
-| ---------------- | ----------------------------------------------------------------------------- |
-| Send Command     | Send printable characters, with optional termination sequence                 |
-| Send HEX Command | Send a HEX encoded sequence of characters, with optional termination sequence |
-
-## Variables
-
-If enabled, the last response received via TCP will be stored in `$(NAME:tcp_response)`
+## Setup
+1. Create a new Multitransport Manager
+2. Assign transport(s) to Multitransport Manager
+3. Assign tracks to transports or use the automatic setlist
+4. In the Multitransport Manager add an event transport and set its listening port
