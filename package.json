@@ -1,26 +1,20 @@
 {
 	"name": "disguise-mtc",
-	"version": "1.0.4",
-	"api_version": "1.0.0",
-	"keywords": [
-		"Media Server"
-	],
-	"manufacturer": "Disguise",
-	"product": "Disguise - Multi Transport Control",
-	"shortname": "d3mtc",
-	"homepage": "https://github.com/bitfocus/companion-module-disguise-mtc#readme",
-	"description": "Disguise MultiTransport Control",
-	"main": "disguise-mtc.js",
+	"version": "2.1.2",
+	"main": "main.js",
+	"type": "module",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"
-	},
-	"author": "William Viker <william@bitfocus.io>",
-	"license": "MIT",
-	"bugs": {
-		"url": "https://github.com/bitfocus/companion-module-disguise-mtc/issues"
 	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/bitfocus/companion-module-disguise-mtc.git"
+	},
+	"license": "MIT",
+	"dependencies": {
+		"@companion-module/base": "^1.8.0"
+	},
+	"devDependencies": {
+		"@companion-module/tools": "^1.5.0"
 	}
 }

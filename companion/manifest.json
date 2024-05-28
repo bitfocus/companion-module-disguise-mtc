@@ -1,0 +1,30 @@
+{
+	"id": "disguise-mtc",
+	"name": "disguise-mtc",
+	"shortname": "d3-mtc",
+	"description": "Deisguise MultiTranpsort Control",
+	"version": "2.0.0",
+	"license": "MIT",
+	"repository": "git+https://github.com/bitfocus/companion-module-disguise-mtc.git",
+	"bugs": "https://github.com/bitfocus/companion-module-disguise-mtc/issues",
+	"maintainers": [
+		{
+			"name": "William Viker",
+			"email": "william@bitfocus.io"
+		},
+		{
+			"name": "Ted Charles Brown",
+			"email": "tedcharlesbrown@gmail.com"
+		}
+	],
+	"legacyIds": [],
+	"runtime": {
+		"type": "node18",
+		"api": "nodejs-ipc",
+		"apiVersion": "1.0.0",
+		"entrypoint": "../main.js"
+	},
+	"manufacturer": "Disguise-TCB",
+	"products": ["MTC"],
+	"keywords": ["Media Server"]
+}
