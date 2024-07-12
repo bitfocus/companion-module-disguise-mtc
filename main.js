@@ -8,6 +8,10 @@ class DisguiseMultiTransport extends InstanceBase {
 
 		this.setActionDefinitions(getActionDefinitions(this))
 
+		this.updateStatus(InstanceStatus.UnknownWarning)
+
+		this.log(`debug`, 'Creating Disguise MTC instance')
+
 		await this.configUpdated(config)
 	}
 
@@ -30,7 +34,6 @@ class DisguiseMultiTransport extends InstanceBase {
 		}
 	}
 
-	// Return config fields for web config
 	getConfigFields() {
 		return ConfigFields
 	}
@@ -48,6 +51,7 @@ class DisguiseMultiTransport extends InstanceBase {
 
 			this.socket.on('status_change', (status, message) => {
 				this.updateStatus(status, message)
+				this.log('debug', 'Disguise MTC Status change: ' + status)
 			})
 
 			this.socket.on('error', (err) => {
@@ -56,17 +60,7 @@ class DisguiseMultiTransport extends InstanceBase {
 			})
 
 			this.socket.on('data', (data) => {
-				if (this.config.saveresponse) {
-					let dataResponse = data
-
-					if (this.config.convertresponse == 'string') {
-						dataResponse = data.toString()
-					} else if (this.config.convertresponse == 'hex') {
-						dataResponse = data.toString('hex')
-					}
-
-					this.setVariableValues({ tcp_response: dataResponse })
-				}
+				this.log('debug', 'Received: ' + data.toString())
 			})
 		} else {
 			this.updateStatus(InstanceStatus.BadConfig)
