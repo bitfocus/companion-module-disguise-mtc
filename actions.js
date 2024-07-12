@@ -50,7 +50,7 @@ const ACTION_OPTIONS = [
 		type: 'textinput',
 		label: 'Transition time (Seconds)',
 		id: 'time',
-		default: '1',
+		default: '0',
 		regex: '/^\\d+(\\.\\d+)?$/', // positive float
 		useVariables: true,
 		isVisible: (options) => !options.transitionType,
@@ -105,40 +105,7 @@ function parseLocationRegex(location) {
 export function getActionDefinitions(self) {
 	return {
 		GotoCue: {
-			name: "Go To Cue",
-			options: [
-				ACTION_OPTIONS[0], // Command
-				ACTION_OPTIONS[1], // Transport
-				ACTION_OPTIONS[2], // Track
-				ACTION_OPTIONS[3]  // Target
-			],
-			callback: async (action) => {
-				const player = await self.parseVariablesInString(action.options.player)
-				const command = await self.parseVariablesInString(action.options.command)
-				const track = await self.parseVariablesInString(action.options.track)
-				let location
-
-				try {
-					location = await parseLocationRegex(action.options.target)
-				} catch (error) {
-					self.log('error', error.message)
-					return
-				}
-	
-				const formattedCommand = {
-					track_command: {
-						player,
-						command,
-						track,
-						location,
-					},
-				}
-	
-				sendCommand(self, formattedCommand)
-			},
-		},
-		GotoCueXF: {
-			name: "Go To Cue: Crossfade",
+			name: "Go To Cue / Timecode",
 			options: ACTION_OPTIONS,
 			callback: async (action) => {
 				const player = await self.parseVariablesInString(action.options.player)
@@ -184,93 +151,6 @@ export function getActionDefinitions(self) {
 				sendCommand(self, formattedCommand)
 			},
 		},
-		// GotoCueXFTime: {
-		// 	name: "Go To Cue: Crossfade (Time)",
-		// 	options: [
-		// 		...ACTION_OPTIONS,
-		// 		{
-		// 			type: 'textinput',
-		// 			label: 'Transition time (Seconds)',
-		// 			id: 'time',
-		// 			default: '1',
-		// 			regex: '/^\\d+(\\.\\d+)?$/', // positive float
-		// 		},
-		// 	],
-		// 	callback: async (action) => {
-		// 		const player = await self.parseVariablesInString(action.options.player)
-		// 		const command = await self.parseVariablesInString(action.options.command)
-		// 		const track = await self.parseVariablesInString(action.options.track)
-		// 		const transition = parseFloat(await self.parseVariablesInString(action.options.time))
-		// 		let location
-
-		// 		try {
-		// 			location = await parseLocationRegex(action.options.target)
-		// 		} catch (error) {
-		// 			self.log('error', error.message)
-		// 			return
-		// 		}
-	
-		// 		const formattedCommand = {
-		// 			track_command: {
-		// 				player,
-		// 				command,
-		// 				track,
-		// 				location,
-		// 				transition,
-		// 			},
-		// 		}
-	
-		// 		sendCommand(self, formattedCommand)
-		// 	},
-		// },
-		// GotoCueXFTrackSection: {
-		// 	name: "Go To Cue: Crossfade (Track Section)",
-		// 	options: [
-		// 		...ACTION_OPTIONS,
-		// 		{
-		// 			type: 'textinput',
-		// 			label: 'Transition Track',
-		// 			id: 'transitionTrack',
-		// 			default: '',
-		// 			regex: '/.*/'
-		// 		},
-		// 		{
-		// 			type: 'textinput',
-		// 			label: 'Transition Section',
-		// 			id: 'transitionSection',
-		// 			default: '',
-		// 			regex: '/.*/'
-		// 		},
-		// 	],
-		// 	callback: async (action) => {
-		// 		const player = await self.parseVariablesInString(action.options.player)
-		// 		const command = await self.parseVariablesInString(action.options.command)
-		// 		const track = await self.parseVariablesInString(action.options.track)
-		// 		const transitionTrack = await self.parseVariablesInString(action.options.transitionTrack)
-		// 		const transitionSection = await self.parseVariablesInString(action.options.transitionSection)
-		// 		let location
-
-		// 		try {
-		// 			location = await parseLocationRegex(action.options.target)
-		// 		} catch (error) {
-		// 			self.log('error', error.message)
-		// 			return
-		// 		}
-
-		// 		const formattedCommand = {
-		// 			track_command: {
-		// 				player,
-		// 				command,
-		// 				track,
-		// 				location,
-		// 				transitionTrack,
-		// 				transitionSection
-		// 			},
-		// 		}
-
-		// 		sendCommand(self, formattedCommand)
-		// 	},
-		// },
 		TransportCommand: {
 			name: "Transport Command",
 			options: ACTION_OPTIONS.slice(0,2),
