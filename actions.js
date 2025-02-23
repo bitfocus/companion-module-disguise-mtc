@@ -36,6 +36,42 @@ const ACTION_OPTIONS = [
 		tooltip: 'Format as CUE number (\'1\', \'1.2\', or \'1.2.3\') or Timecode (\'00:00:00:00\').',
 		default: '1.0.0',
 		regex: '/^\\d+(\\.\\d+(\\.\\d+)?)?$|^\\d{2}:\\d{2}:\\d{2}:\\d{2}$/'
+	},
+	{
+		type: 'checkbox',
+		label: 'Use Time-based Crossfade',
+		id: 'useTimeCrossfade',
+		default: false
+	},
+	{
+		type: 'textinput',
+		label: 'Transition time (Seconds)',
+		id: 'time',
+		default: '1',
+		regex: '/^\\d+(\\.\\d+)?$/',
+		isVisible: (options) => options.useTimeCrossfade
+	},
+	{
+		type: 'checkbox',
+		label: 'Use Track Section Crossfade',
+		id: 'useTrackCrossfade',
+		default: false
+	},
+	{
+		type: 'textinput',
+		label: 'Transition Track',
+		id: 'transitionTrack',
+		default: '',
+		regex: '/.*/',
+		isVisible: (options) => options.useTrackCrossfade
+	},
+	{
+		type: 'textinput',
+		label: 'Transition Section',
+		id: 'transitionSection',
+		default: '',
+		regex: '/.*/',
+		isVisible: (options) => options.useTrackCrossfade
 	}
 ]
 
@@ -81,7 +117,7 @@ export function getActionDefinitions(self) {
 					self.log('error', error.message)
 					return
 				}
-	
+
 				const formattedCommand = {
 					track_command: {
 						player,
@@ -90,92 +126,20 @@ export function getActionDefinitions(self) {
 						location,
 					},
 				}
-	
-				sendCommand(self, formattedCommand)
-			},
-		},
-		GotoCueXFTime: {
-			name: "Go To Cue: Crossfade (Time)",
-			options: [
-				...ACTION_OPTIONS,
-				{
-					type: 'textinput',
-					label: 'Transition time (Seconds)',
-					id: 'time',
-					default: '1',
-					regex: '/^\\d+(\\.\\d+)?$/', // positive float
-				},
-			],
-			callback: async (action) => {
-				const player = await self.parseVariablesInString(action.options.player)
-				const command = await self.parseVariablesInString(action.options.command)
-				const track = await self.parseVariablesInString(action.options.track)
-				const transition = parseFloat(await self.parseVariablesInString(action.options.time))
-				let location
 
-				try {
-					location = await parseLocationRegex(action.options.target)
-				} catch (error) {
-					self.log('error', error.message)
-					return
-				}
-	
-				const formattedCommand = {
-					track_command: {
-						player,
-						command,
-						track,
-						location,
-						transition,
-					},
-				}
-	
-				sendCommand(self, formattedCommand)
-			},
-		},
-		GotoCueXFTrackSection: {
-			name: "Go To Cue: Crossfade (Track Section)",
-			options: [
-				...ACTION_OPTIONS,
-				{
-					type: 'textinput',
-					label: 'Transition Track',
-					id: 'transitionTrack',
-					default: '',
-					regex: '/.*/'
-				},
-				{
-					type: 'textinput',
-					label: 'Transition Section',
-					id: 'transitionSection',
-					default: '',
-					regex: '/.*/'
-				},
-			],
-			callback: async (action) => {
-				const player = await self.parseVariablesInString(action.options.player)
-				const command = await self.parseVariablesInString(action.options.command)
-				const track = await self.parseVariablesInString(action.options.track)
-				const transitionTrack = await self.parseVariablesInString(action.options.transitionTrack)
-				const transitionSection = await self.parseVariablesInString(action.options.transitionSection)
-				let location
-
-				try {
-					location = await parseLocationRegex(action.options.target)
-				} catch (error) {
-					self.log('error', error.message)
-					return
+				if (action.options.useTimeCrossfade) {
+					formattedCommand.track_command.transition = parseFloat(
+						await self.parseVariablesInString(action.options.time)
+					)
 				}
 
-				const formattedCommand = {
-					track_command: {
-						player,
-						command,
-						track,
-						location,
-						transitionTrack,
-						transitionSection
-					},
+				if (action.options.useTrackCrossfade) {
+					formattedCommand.track_command.transitionTrack = await self.parseVariablesInString(
+						action.options.transitionTrack
+					)
+					formattedCommand.track_command.transitionSection = await self.parseVariablesInString(
+						action.options.transitionSection
+					)
 				}
 
 				sendCommand(self, formattedCommand)
