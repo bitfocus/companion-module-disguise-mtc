@@ -31,7 +31,7 @@ const OPTION_TRANSPORT = {
 	type: 'textinput',
 	label: 'Transport',
 	default: '',
-	tooltip: 'Transport to target, ex: "default". Cannot be empty for some actions.',
+	tooltip: 'Transport to target, ex: "default".',
 	useVariables: true,
 };
 
@@ -40,7 +40,7 @@ const OPTION_TRACK = {
 	type: 'textinput',
 	label: 'Track',
 	default: '',
-	tooltip: 'Track to target, ex: "Track 1". Required for "Go to Cue" action.',
+	tooltip: 'Track to target, ex: "Track 1".',
 	useVariables: true,
 };
 
@@ -49,7 +49,7 @@ const OPTION_LOCATION = {
 	type: 'textinput',
 	label: 'Cue / Timecode',
 	default: '1.1',
-	tooltip: "Format as CUE number ('1', '1.2', or '1.2.3') or Timecode ('00:00:00:00'). Required.",
+	tooltip: "Format as CUE number ('1', '1.2', or '1.2.3') or Timecode ('00:00:00:00').",
 	regex: '/^(\\d+(\\.\\d{1,}(\\.\\d{1,})?)?|\\d{2}:\\d{2}:\\d{2}:\\d{2})$/', // Validates format, not emptiness here directly
 	useVariables: true,
 };
@@ -67,7 +67,7 @@ const OPTION_TRANSITION_TIME = {
 	type: 'textinput',
 	label: 'Transition Time (Seconds)',
 	default: '0',
-	tooltip: 'Duration of the transition in seconds. Leave empty or "0" for no timed transition, or invalid for no timed transition.',
+	tooltip: 'Duration of the transition in seconds.',
 	regex: '/^(?:\\d+\\.?\\d*|\\.\\d+)$/',
 	useVariables: true,
 	isVisible: (options) => !options.transitionType,
@@ -78,7 +78,7 @@ const OPTION_TRANSITION_TRACK = {
 	label: 'Transition Track',
 	id: 'transitionTrack',
 	default: '',
-	tooltip: 'Track for transition, ex: "transitions". Required if "Use Track Transition" is checked.',
+	tooltip: 'Track for transition, ex: "transitions".',
 	useVariables: true,
 	isVisible: (options) => options.transitionType === true,
 };
@@ -88,7 +88,7 @@ const OPTION_TRANSITION_SECTION = {
 	label: 'Transition Section',
 	id: 'transitionSection',
 	default: '',
-	tooltip: 'Section on transition track, ex: "woosh" or "1.1". Required if "Use Track Transition" is checked.',
+	tooltip: 'Section on transition track, ex: "woosh" or "1.1".',
 	useVariables: true,
 	isVisible: (options) => options.transitionType === true,
 };
