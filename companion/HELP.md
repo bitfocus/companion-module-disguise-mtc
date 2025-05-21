@@ -1,5 +1,5 @@
 # Disguise Multi Event Transport Control
-For more details on the protocol, visit `https://help.disguise.one/en/Content/Configuring/Transports/Multi-Transport.htm`
+For more details on the protocol, visit `https://help.disguise.one/designer/timeline-tracks-transports/multitransport-controller.html`
 
 Disguise provides a way to gather key information on the status of a Disguise session whilst also providing some basic timeline control.
 
