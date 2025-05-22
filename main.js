@@ -1,7 +1,11 @@
 const { InstanceBase, Regex, runEntrypoint, InstanceStatus } = require('@companion-module/base');
-const net = require('net');
+const net = require('net'); // Node.js's native TCP networking module
 
 const UpdateActions = require('./actions');
+
+const INITIAL_CONNECT_TIMEOUT = 2000; // ms, for the very first connection attempt (2 seconds)
+const RETRY_CONNECT_TIMEOUT = 5000;   // ms, for subsequent reconnection attempts (5 seconds)
+const RETRY_DELAY = 5000;             // ms, time to wait before attempting to reconnect (5 seconds)
 
 class ModuleInstance extends InstanceBase {
 	constructor(internal) {
@@ -9,33 +13,83 @@ class ModuleInstance extends InstanceBase {
 		this.socket = null;
 		this.config = {}; // Initialize config object
 		this.isDestroyed = false; // Flag to track if the instance is in a destroyed state
+		this.retryTimer = null; // Timer for automatic reconnection attempts
+		this.currentConnectionAttempt = null; // To manage the promise of the current initSocket call
 	}
 
 	async init(config) {
 		this.config = config; // Store the initial config
-		this.isDestroyed = false; // Reset destroyed flag
+		this.isDestroyed = false; // Reset destroyed flag on initialization
+		this.clearRetryTimer(); // Clear any existing retry timers on init
 
-		// Define actions
-		this.updateActions();
+		this.updateActions(); // Define actions.
 
-		// Set an initial status. The connection attempt will be triggered by configUpdated.
-		// If host/port are not even in the initial config (e.g. truly empty, not even defaults),
-		// then it's a BadConfig state. Otherwise, we wait for configUpdated.
-		if (!this.config.host || !this.config.port) {
+		// Attempt to connect if host and port are present in the config
+		if (this.config.host && this.config.port) {
+			this.log('info', 'Initial configuration present, attempting to connect...');
+			// Don't set status to Connecting here, initSocket will do it.
+			await this.initSocket(true); // Pass true for 'isInitialAttempt'
+		} else {
 			this.updateStatus(InstanceStatus.BadConfig, 'Host or Port not configured. Please save configuration.');
 			this.log('warn', 'Initial: Host or Port not configured. Please configure and save.');
-		} else {
-			// Host and Port are present (e.g. defaults).
-			// We will let configUpdated handle the first connection attempt.
-			this.updateStatus(InstanceStatus.Disconnected, 'Waiting for configuration to be applied.');
 		}
 	}
 
-	async initSocket() {
-		this.isDestroyed = false; // Reset destroyed flag for this connection attempt
+	/**
+	 * Clears the current retry timer if it exists.
+	 */
+	clearRetryTimer() {
+		if (this.retryTimer) {
+			clearTimeout(this.retryTimer);
+			this.retryTimer = null;
+			this.log('debug', 'Retry timer cleared.');
+		}
+	}
 
-		// Clean up existing socket if any (e.g., from a previous attempt or config update)
+	/**
+	 * Starts a timer to attempt reconnection after RETRY_DELAY.
+	 */
+	startRetryTimer() {
+		this.clearRetryTimer(); // Ensure no other retry timers are running
+
+		if (this.isDestroyed) {
+			this.log('debug', 'Module is destroyed, not starting retry timer.');
+			return;
+		}
+		if (!this.config.host || !this.config.port) {
+			this.log('warn', 'Cannot start retry timer: Host or Port not configured.');
+			this.updateStatus(InstanceStatus.BadConfig, 'Host or Port not configured.');
+			return;
+		}
+
+		this.log('info', `Will attempt to reconnect in ${RETRY_DELAY / 1000} seconds.`);
+		this.retryTimer = setTimeout(async () => {
+			if (this.isDestroyed) return; // Check again before running
+			this.log('info', 'Retrying connection...');
+			// Don't set status to Connecting here, initSocket will do it.
+			await this.initSocket(false); // Pass false for 'isInitialAttempt'
+		}, RETRY_DELAY);
+	}
+
+	/**
+	 * Initializes the Telnet socket connection.
+	 * @param {boolean} isInitialAttempt - True if this is the first attempt on module init, false for retries/updates.
+	 * @returns {Promise<boolean>} Resolves to true on successful connection, false otherwise.
+	 */
+	async initSocket(isInitialAttempt = false) {
+		// If another connection attempt is already in progress, don't start a new one.
+		// This can happen if configUpdated is called while a retry is scheduled or running.
+		if (this.currentConnectionAttempt) {
+			this.log('debug', 'Connection attempt already in progress. Aborting new attempt.');
+			return this.currentConnectionAttempt; // Return the existing promise
+		}
+
+		this.isDestroyed = false;
+		this.clearRetryTimer(); // Stop retries if we are manually initiating a connection
+
+		// Clean up existing socket if any
 		if (this.socket) {
+			this.log('debug', 'Destroying existing socket before creating a new one.');
 			this.socket.removeAllListeners();
 			this.socket.destroy();
 			this.socket = null;
@@ -47,152 +101,162 @@ class ModuleInstance extends InstanceBase {
 		if (!host || !port || port === 0) {
 			this.updateStatus(InstanceStatus.BadConfig, 'Host or Port not configured properly for connection.');
 			this.log('warn', 'Connection attempt aborted in initSocket: Host or Port not configured properly.');
+			this.currentConnectionAttempt = null; // Clear the attempt flag
 			return false;
 		}
 
-		this.updateStatus(InstanceStatus.Connecting, `Connecting to ${host}:${port}`);
+		this.updateStatus(InstanceStatus.Connecting, `Connecting to ${host}:${port}...`);
+		this.log('info', `Attempting to connect to ${host}:${port} (Attempt type: ${isInitialAttempt ? 'Initial' : 'Retry/Update'}).`);
 
-		return new Promise((resolve) => {
-			this.socket = new net.Socket();
-			this.socket.setTimeout(5000);
+		this.currentConnectionAttempt = new Promise((resolve) => {
+			const socket = new net.Socket();
+			this.socket = socket; // Assign to instance property immediately for access in handlers
 
-			this.socket.on('connect', () => {
-				if (this.isDestroyed) { // Check if module was destroyed during connection attempt
-					if (this.socket) { this.socket.destroy(); this.socket = null; }
+			// Use a shorter timeout for the very first attempt, longer for retries
+			const connectTimeout = isInitialAttempt ? INITIAL_CONNECT_TIMEOUT : RETRY_CONNECT_TIMEOUT;
+			socket.setTimeout(connectTimeout);
+
+			socket.on('connect', () => {
+				if (this.isDestroyed || this.socket !== socket) { // Check if socket is still the current one
+					if (socket && !socket.destroyed) socket.destroy();
+					if (this.socket === socket) this.socket = null; // Only nullify if it's the one we were working with
 					resolve(false); return;
 				}
-				this.log('info', `Connected to ${host}:${port}`);
+				this.log('info', `Successfully connected to ${host}:${port}.`);
 				this.updateStatus(InstanceStatus.Ok);
-				this.socket.setTimeout(0); // Clear the connection timeout
-				resolve(true); // Connection successful
+				socket.setTimeout(0); // Clear the connection timeout
+				this.clearRetryTimer(); // Connection successful, stop retrying
+				resolve(true);
 			});
 
-			this.socket.on('timeout', () => {
-				if (this.isDestroyed) {
-					this.log('debug', 'Socket connection timeout event received after module destruction, ignoring.');
+			socket.on('timeout', () => { // Triggered if .connect() takes too long
+				if (this.isDestroyed || this.socket !== socket) {
+					if (socket && !socket.destroyed) socket.destroy();
+					if (this.socket === socket) this.socket = null;
 					resolve(false); return;
 				}
-				this.log('error', `Connection attempt timeout to ${host}:${port}`);
-				this.updateStatus(InstanceStatus.ConnectionFailure, 'Connection Timeout');
-				if (this.socket) {
-					this.socket.destroy();
+				this.log('error', `Connection attempt to ${host}:${port} timed out after ${connectTimeout / 1000}s.`);
+				// Status will be updated by 'close' or 'error' handler if socket is destroyed
+				if (socket && !socket.destroyed) {
+					socket.destroy(); // This will trigger the 'close' event
 				}
-				// this.socket will be set to null in 'close' handler
-				resolve(false); // Connection failed
+				// The promise is resolved in the 'close' or 'error' handler for this socket instance
 			});
 
-			this.socket.on('error', (err) => {
-				if (this.isDestroyed) {
-					this.log('debug', `Socket error event received after module destruction: ${err.message}. Ignoring.`);
+			socket.on('error', (err) => {
+				if (this.isDestroyed || this.socket !== socket) {
+					if (socket && !socket.destroyed) socket.destroy();
+					if (this.socket === socket) this.socket = null;
 					resolve(false); return;
 				}
-				this.log('error', `Socket error: ${err.message} (Code: ${err.code})`);
-				if (this.instanceOptions.status !== InstanceStatus.ConnectionFailure) {
-					this.updateStatus(InstanceStatus.ConnectionFailure, err.code || 'Socket Error');
+				this.log('error', `Socket error for ${host}:${port}: ${err.message} (Code: ${err.code})`);
+				// Status update and retry will be handled by 'close' event if socket is destroyed
+				if (socket && !socket.destroyed) {
+					socket.destroy(); // This will trigger the 'close' event
 				}
-				if (this.socket && !this.socket.destroyed) {
-					this.socket.destroy();
-				}
-				// this.socket will be set to null in 'close' handler
-				resolve(false); // Connection failed or an error occurred during connection attempt
+				// The promise is resolved in the 'close' or 'error' handler for this socket instance
 			});
 
-			this.socket.on('close', (hadError) => {
-				if (this.isDestroyed) {
-					this.log('debug', 'Socket close event received after module destruction, ignoring.');
+			socket.on('close', (hadError) => {
+				// Check if this 'close' event is for the socket we are currently managing in this promise
+				if (this.socket !== socket && this.socket !== null) { // If this.socket is null, then this might be the one closing
+					this.log('debug', 'Close event for an old/stale socket instance, ignoring for current promise.');
+					if (socket && !socket.destroyed) socket.destroy(); // Ensure this old socket is fully gone
 					return;
 				}
-				this.log('warn', `Connection closed. Had error: ${hadError}`);
-				this.socket = null; 
-				try {
-					const currentStatusInternal = this.instanceOptions.status;
-					if (currentStatusInternal === InstanceStatus.Ok || currentStatusInternal === InstanceStatus.Connecting) {
-						this.updateStatus(InstanceStatus.Disconnected, hadError ? 'Connection Closed with Error' : 'Connection Closed by Server/Network');
-					}
-				} catch (e) {
-					this.log('error', `Critical error in 'close' handler while trying to update status: ${e.message}. Module might be unstable.`);
+				if (this.isDestroyed) {
+					this.log('debug', 'Socket closed after module destruction.');
+					if (this.socket === socket) this.socket = null;
+					resolve(false); return;
 				}
+
+				this.log('warn', `Connection to ${host}:${port} closed. Had error: ${hadError}`);
+				if (this.socket === socket) { // Only nullify if it's the current active socket
+					this.socket = null;
+				}
+
+				// If the connection was never established (still connecting) or was OK, then update status and attempt retry
+				const currentStatus = this.instanceOptions.status;
+				if (currentStatus === InstanceStatus.Connecting || currentStatus === InstanceStatus.Ok) {
+					this.updateStatus(InstanceStatus.ConnectionFailure, hadError ? 'Connection Lost with Error' : 'Connection Closed');
+				}
+				
+				this.startRetryTimer(); // Attempt to reconnect
+				resolve(false); // Connection attempt ultimately failed or connection was lost
 			});
 
-			this.socket.on('data', (data) => {
-				if (this.isDestroyed) {
-					this.log('debug', 'Socket data event received after module destruction, ignoring.');
-					return;
-				}
+			socket.on('data', (data) => {
+				if (this.isDestroyed || this.socket !== socket) { return; }
 				this.log('debug', `Received data: ${data.toString().trim()}`);
 			});
 
-			this.log('info', `Attempting to connect to ${host}:${port}`);
 			try {
-				this.socket.connect(port, host);
-			} catch (e) { // Catch synchronous errors from socket.connect() itself
+				socket.connect({ host: host, port: port });
+			} catch (e) {
 				this.log('error', `Failed to initiate connection (synchronous error): ${e.message}`);
 				this.updateStatus(InstanceStatus.ConnectionFailure, 'Connection Init Failed');
-				if (this.socket) {
-					this.socket.destroy();
-				}
-				this.socket = null;
-				resolve(false); // Connection attempt failed
+				if (this.socket === socket) this.socket = null; // Ensure cleanup if this was the one
+				if (socket && !socket.destroyed) socket.destroy(); // This should trigger 'close'
+				// startRetryTimer will be called from 'close'
+				resolve(false);
 			}
 		});
+
+		try {
+			const result = await this.currentConnectionAttempt;
+			return result;
+		} finally {
+			this.currentConnectionAttempt = null; // Clear the flag once the attempt is complete
+		}
 	}
 
 	async destroy() {
 		this.log('debug', 'Destroying module instance...');
-		this.isDestroyed = true; // Set the flag to indicate the instance is being destroyed
+		this.isDestroyed = true;
+		this.clearRetryTimer(); // Stop any pending reconnection attempts
 
 		if (this.socket) {
 			this.socket.removeAllListeners();
-			this.socket.destroy();
+			this.socket.destroy(); // This should trigger 'close' but isDestroyed flag will prevent retry
 			this.socket = null;
 		}
+		this.currentConnectionAttempt = null; // Clear any pending connection promise
 
 		this.updateStatus(InstanceStatus.Disconnected, 'Module Destroyed');
 		this.log('debug', 'Module instance destroyed.');
 	}
 
 	async configUpdated(config) {
-		const oldHost = this.config.host; // Get current host/port before updating this.config
+		const oldHost = this.config.host;
 		const oldPort = this.config.port;
-		let oldSocketState = this.socket ? (!this.socket.destroyed && this.socket.writable) : false;
-
-		this.config = config; // Apply the new config passed by Companion
-
-		// Update actions
-		this.updateActions();
-
-		let needsConnectionAttempt = false;
-
-		// Determine if a connection attempt is needed:
-		// 1. Config has valid host/port, AND EITHER
-		//    a. Host or port actually changed, OR
-		//    b. Socket doesn't exist or is not healthy (covers initial load, restart, or dropped connection)
+		
+		this.config = config; // Apply the new config
+		this.updateActions(); // Update actions based on new config if necessary
+		
+		// If config changed in a way that requires a new connection, or if socket is bad
 		if (this.config.host && this.config.port) {
-			if (this.config.host !== oldHost || this.config.port !== oldPort) {
-				this.log('info', 'Host or Port configuration changed.');
-				needsConnectionAttempt = true;
-			} else if (!this.socket || this.socket.destroyed || !this.socket.writable) {
-				// This condition handles the first call after init (socket is null),
-				// or if the socket dropped for some reason and config is re-applied/saved.
-				this.log('info', 'Socket is not present or not healthy; configuration appears valid.');
-				needsConnectionAttempt = true;
+			if (this.config.host !== oldHost || 
+			    this.config.port !== oldPort || 
+			    !this.socket || 
+			    this.socket.destroyed || 
+			    !this.socket.writable) {
+				
+				this.log('info', 'Configuration updated or socket state requires reconnection, attempting to re-initialize connection.');
+				// this.updateStatus(InstanceStatus.Connecting, 'Applying configuration...'); // initSocket will set this
+				this.clearRetryTimer(); // Stop previous retries, new attempt will be made by initSocket
+				await this.initSocket(false); // Pass false for 'isInitialAttempt'
 			}
-		}
-
-		if (needsConnectionAttempt) {
-			this.log('info', 'Configuration applied or updated, attempting to (re)initialize connection.');
-			await this.initSocket(); // Attempt/Re-attempt connection
-		} else if (!this.config.host || !this.config.port) {
-			// Config is invalid (no host/port)
+		} else {
+			// New config is invalid (no host/port)
 			this.updateStatus(InstanceStatus.BadConfig, 'Host or Port not configured.');
-			this.log('warn', 'configUpdated: Host or Port not configured.');
-			if (this.socket) { // Ensure any existing socket is closed if config becomes invalid
+			this.log('warn', 'configUpdated: Host or Port not configured. Closing existing connection if any.');
+			this.clearRetryTimer();
+			if (this.socket) {
 				this.socket.removeAllListeners();
 				this.socket.destroy();
 				this.socket = null;
 			}
 		}
-		// If config is valid, unchanged, and socket is healthy, do nothing regarding connection.
 	}
 
 	getConfigFields() {
