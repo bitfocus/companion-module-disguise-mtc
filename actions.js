@@ -26,24 +26,6 @@ const OPTION_PLAYMODE_LIMITED = {
 	choices: GO_TO_CUE_PLAY_MODES, // Limited play modes
 };
 
-const OPTION_TRANSPORT = {
-	id: 'transport',
-	type: 'textinput',
-	label: 'Transport',
-	default: '',
-	tooltip: 'Transport to target, ex: "default".',
-	useVariables: true,
-};
-
-const OPTION_TRACK = {
-	id: 'track',
-	type: 'textinput',
-	label: 'Track',
-	default: '',
-	tooltip: 'Track to target, ex: "Track 1".',
-	useVariables: true,
-};
-
 const OPTION_LOCATION = {
 	id: 'location',
 	type: 'textinput',
@@ -68,19 +50,9 @@ const OPTION_TRANSITION_TIME = {
 	label: 'Transition Time (Seconds)',
 	default: '0',
 	tooltip: 'Duration of the transition in seconds.',
-	regex: '/^(?:\\d+\\.?\\d*|\\.\\d+)$/',
+	regex: '/^(?:\\d+\\.?\\d*|\\.\\d+)$/', 
 	useVariables: true,
 	isVisible: (options) => !options.transitionType,
-};
-
-const OPTION_TRANSITION_TRACK = {
-	type: 'textinput',
-	label: 'Transition Track',
-	id: 'transitionTrack',
-	default: '',
-	tooltip: 'Track for transition, ex: "transitions".',
-	useVariables: true,
-	isVisible: (options) => options.transitionType === true,
 };
 
 const OPTION_TRANSITION_SECTION = {
@@ -103,7 +75,7 @@ function formatCue(cue, logger) {
 	const timecodeRegex = /^\d{2}:\d{2}:\d{2}:\d{2}$/;
 	const cueNumberRegex = /^\d+(\.\d+(\.\d+)?)?$/;
 
-	// Check if it's an empty string or only whitespace after variable parsing.
+	// Check if it's an empty string or only whitespace after variable parsing
 	if (cue.trim() === "") {
 		const logMessage = `Cue/Timecode cannot be an empty string or contain only whitespace. Received: '${cue}'`;
 		if (logger && typeof logger.log === 'function') {
@@ -120,7 +92,7 @@ function formatCue(cue, logger) {
 	} else if (cueNumberRegex.test(cue)) {
 		return `CUE ${cue}`;
 	} else {
-		const logMessage = `Invalid cue format: "${cue}". Expected CUE (e.g., '1.1') or Timecode (e.g., '00:00:00:00'). Regex should have caught this.`;
+		const logMessage = `Invalid cue format: "${cue}". Expected CUE (e.g., '1.1') or Timecode (e.g., '00:00:00:00').`;
 		if (logger && typeof logger.log === 'function') {
 			logger.log('error', logMessage);
 		} else {
@@ -131,17 +103,50 @@ function formatCue(cue, logger) {
 }
 
 module.exports = function (self) {
+	
+	// Dynamically create transport options based on fetched list
+	const dynamicOptionTransport = {
+		id: 'transport',
+		type: 'dropdown',
+		label: 'Transport (Player)',
+		default: (self.playerList && self.playerList.length > 0) ? self.playerList[0].id : '',
+		choices: (self.playerList && self.playerList.length > 0) ? self.playerList : [{ id: '', label: 'No transports loaded' }],
+		tooltip: 'Select a target transport. List is updated by polling.',
+	};
+
+	// Dynamically create track options based on fetched list
+	const dynamicOptionTrack = {
+		id: 'track',
+		type: 'dropdown',
+		label: 'Track',
+		default: (self.trackList && self.trackList.length > 0) ? self.trackList[0].id : '',
+		choices: (self.trackList && self.trackList.length > 0) ? self.trackList : [{ id: '', label: 'No tracks loaded' }],
+		tooltip: 'Select a target track. List is updated by polling.', 
+	};
+
+	// Dynamically create transition track options based on fetched list
+	const dynamicOptionTransitionTrack = {
+		id: 'transitionTrack',
+		type: 'dropdown',
+		label: 'Transition Track',
+		default: (self.trackList && self.trackList.length > 0) ? self.trackList[0].id : '', // Default to first available track or empty
+		choices: (self.trackList && self.trackList.length > 0) ? self.trackList : [{ id: '', label: 'No tracks loaded' }],
+		tooltip: 'Select a transition track. List is updated by polling.',
+		isVisible: (options) => options.transitionType === true, // Keep visibility condition
+	};
+
+
 	self.setActionDefinitions({
 		go_to_cue: {
 			name: 'Go to Cue / Timecode',
 			options: [
 				OPTION_PLAYMODE_LIMITED,
-				OPTION_TRANSPORT,
-				OPTION_TRACK,
+				dynamicOptionTransport,     // Use dynamic transport options
+				dynamicOptionTrack,         // Use dynamic track options
 				OPTION_LOCATION,
 				OPTION_TRANSITION_TYPE,
 				OPTION_TRANSITION_TIME,
-				OPTION_TRANSITION_TRACK,
+				dynamicOptionTransitionTrack, // Use dynamic transition track options
 				OPTION_TRANSITION_SECTION,
 			],
 			callback: async (event) => {
@@ -149,22 +154,17 @@ module.exports = function (self) {
 					self.log('error', 'Socket not initialized or not writable. Cannot send command.');
 					return;
 				}
-
 				const options = event.options;
+				const currentTransport = options.transport; 
+				const currentTrack = options.track;
 
-				// Ensure options.xxx are treated as strings, default to empty string if undefined
-				const parsedTransport = await self.parseVariablesInString(options.transport || '');
-				const parsedTrack = await self.parseVariablesInString(options.track || '');
 				const parsedLocation = await self.parseVariablesInString(options.location || '');
 
-
-				// Validate required fields: Transport, Track, Location
-				// Location is also validated by formatCue based on its regex
-				if (parsedTransport === "") { // Check for empty string exactly
+				if (currentTransport === "") { // Check for empty string exactly
 					self.log('error', 'Transport name cannot be empty. Command not sent.');
 					return;
 				}
-				if (parsedTrack === "") { // Check for empty string exactly
+				if (currentTrack === "") { // Check for empty string exactly
 					self.log('error', 'Track name cannot be empty for "Go to Cue" action. Command not sent.');
 					return;
 				}
@@ -176,50 +176,43 @@ module.exports = function (self) {
 				}
 
 				const playmode = options.playmode;
-
 				const trackCommandPayload = {
 					command: playmode,
-					player: parsedTransport,
-					track: parsedTrack,
+					player: currentTransport,
+					track: currentTrack,
 					location: cueFormatted,
 				};
 
 				if (options.transitionType) { // User selected 'Use Track Transition'
-					const parsedTransitionTrack = await self.parseVariablesInString(options.transitionTrack || '');
+					// Value from dropdown for transitionTrack
+					const currentTransitionTrack = options.transitionTrack;; 
 					const parsedTransitionSection = await self.parseVariablesInString(options.transitionSection || '');
-
-					if (parsedTransitionTrack === "" || parsedTransitionSection === "") {
-						self.log(
-							'error',
-							'Transition Track and Transition Section are required and cannot be empty when "Use Track Transition" is selected. Command not sent.'
-						);
+					
+					if (currentTransitionTrack === "") { // Check if a track was selected/provided
+						self.log('error', 'Transition Track is required and cannot be empty when "Use Track Transition" is selected. Command not sent.');
 						return;
 					}
-					trackCommandPayload.transitionTrack = parsedTransitionTrack;
+					if (parsedTransitionSection === "") { // Section is also typically required
+						self.log('error', 'Transition Section is required and cannot be empty when "Use Track Transition" is selected. Command not sent.');
+						return;
+					}
+
+					trackCommandPayload.transitionTrack = currentTransitionTrack;
 					trackCommandPayload.transitionSection = parsedTransitionSection;
 				} else { // User selected timed transition or wants to omit it
 					const parsedTransitionTime = await self.parseVariablesInString(options.transitionTime || '');
-
 					if (parsedTransitionTime !== "") { // Only process if transitionTime is not empty
 						const transitionTimeNumeric = parseFloat(parsedTransitionTime);
 						// Ensure it's a non-negative number.
 						if (isNaN(transitionTimeNumeric) || transitionTimeNumeric < 0) {
-							self.log(
-								'warn', // Changed to 'warn' as command will still be sent (without transition)
-								`Invalid or negative Transition Time: "${parsedTransitionTime}". Must be a non-negative number. Command sent without timed transition.`
-							);
-							// Do not add 'transition' field if invalid, effectively omitting it
+							self.log('warn', `Invalid or negative Transition Time: "${parsedTransitionTime}". Sent without timed transition.`);
 						} else {
-							// Server expects a string for transition time if it's provided
 							trackCommandPayload.transition = parsedTransitionTime; // Send as string
 						}
 					}
-					// If parsedTransitionTime is empty, 'transition' field is not added to payload.
 				}
 
-				const commandToSend = {
-					track_command: trackCommandPayload,
-				};
+				const commandToSend = { track_command: trackCommandPayload };
 				const message = JSON.stringify(commandToSend);
 				self.log('debug', `Sending command: ${message}`);
 				try {
@@ -233,32 +226,28 @@ module.exports = function (self) {
 			name: 'Transport Command',
 			options: [
 				OPTION_PLAYMODE_FULL,
-				OPTION_TRANSPORT,
+				dynamicOptionTransport,
 			],
 			callback: async (event) => {
 				if (!self.socket || !self.socket.writable) {
 					self.log('error', 'Socket not initialized or not writable. Cannot send command.');
 					return;
 				}
-
 				const options = event.options;
-				const parsedTransport = await self.parseVariablesInString(options.transport || '');
+				const currentTransport = options.transport;
 
-				if (parsedTransport === "") { // Check for empty string exactly
+				if (currentTransport === "") { // Check for empty string exactly
 					self.log('error', 'Transport name cannot be empty for "Transport Command". Command not sent.');
 					return;
 				}
 
 				const playmode = options.playmode;
-
 				const transportCommandPayload = {
 					command: playmode,
-					player: parsedTransport,
+					player: currentTransport,
 				};
 
-				const commandToSend = {
-					track_command: transportCommandPayload,
-				};
+				const commandToSend = { track_command: transportCommandPayload, };
 				const message = JSON.stringify(commandToSend);
 				self.log('debug', `Sending command: ${message}`);
 				try {
