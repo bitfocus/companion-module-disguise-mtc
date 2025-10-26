@@ -1,6 +1,5 @@
+*.mjs
+*.cjs
+*.yarn/*
 node_modules/
-package-lock.json
-/pkg
-/*.tgz
-DEBUG-*
-/.yarn
+yarn.lock
