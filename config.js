@@ -9,24 +9,21 @@ export const ConfigFields = [
 		value: `
 		
 		This module uses MultiTransport interface in disguise via JSON commands over the Telnet protocol.
+		<br><br>
+		<strong>WARNING:
 		<br>
+		Time-based fades broken in r30.8 and later.
 		<br>
-		<strong>WARNING: Track fades are broken in r30.8 and later.</strong>
-		<br>
-		<br>
-		Setup
-		<ul>
-		<li>Create a new Multitransport Manager</li>
-		<li>Assign transport(s) to Multitransport Manager</li>
-		<li>Assign tracks to transports or use the automatic setlist</li>
-		<li>In the Multitransport Manager add an event transport and set its listening port</li>
-		</ul>
+		Track section fades are broken in Disguise.</strong>
+		<br><br>
+		Remember to create a new Multitransport Manager!
+		<br><br>
 		`,
 	},
 	{
 		type: 'textinput',
 		id: 'host',
-		label: 'IP address',
+		label: 'Target IP Address',
 		width: 8,
 		default: '127.0.0.1',
 		regex: Regex.IP,
@@ -39,4 +36,14 @@ export const ConfigFields = [
 		default: 54321,
 		regex: Regex.PORT,
 	},
+	{
+		type: 'number',
+		id: 'pollInterval',
+		label: 'Data Polling Interval (ms)',
+		tooltip: 'How often to refresh player and track lists from the device. Set to 0 to disable automatic polling.',
+		width: 12,
+		default: 5000,
+		min: 0,
+		max: 60000,
+	}
 ]
