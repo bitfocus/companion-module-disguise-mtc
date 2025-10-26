@@ -1,8 +1,5 @@
 import { Regex } from '@companion-module/base'
 
-const REGEX_IP_OR_HOST =
-	'/^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3})$|^((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]).)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9]))$/'
-
 export const ConfigFields = [
 	{
 		type: 'static-text',
@@ -12,6 +9,9 @@ export const ConfigFields = [
 		value: `
 		
 		This module uses MultiTransport interface in disguise via JSON commands over the Telnet protocol.
+		<br>
+		<br>
+		<strong>WARNING: Track fades are broken in r30.8 and later.</strong>
 		<br>
 		<br>
 		Setup
@@ -26,10 +26,10 @@ export const ConfigFields = [
 	{
 		type: 'textinput',
 		id: 'host',
-		label: 'Target Host name or IP',
+		label: 'IP address',
 		width: 8,
 		default: '127.0.0.1',
-		regex: REGEX_IP_OR_HOST,
+		regex: Regex.IP,
 	},
 	{
 		type: 'textinput',
