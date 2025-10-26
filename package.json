@@ -1,21 +1,23 @@
 {
 	"name": "disguise-mtc",
-	"version": "2.0.1",
+	"version": "2.1.0",
 	"main": "main.js",
-	"type": "module",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"format": "prettier -w .",
+		"package": "companion-module-build"
 	},
+	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/bitfocus/companion-module-disguise-mtc.git"
 	},
-	"license": "MIT",
 	"dependencies": {
-		"@companion-module/base": "^1.8.0"
+		"@companion-module/base": "~1.11.3"
 	},
 	"devDependencies": {
-		"@companion-module/tools": "^1.5.0"
+		"@companion-module/tools": "^2.3.0",
+		"prettier": "^3.5.3"
 	},
-	"packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+	"prettier": "@companion-module/tools/.prettierrc.json",
+	"packageManager": "yarn@4.9.1"
 }
