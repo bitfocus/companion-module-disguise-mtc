@@ -1,6 +1,6 @@
 {
-	"name": "disguise-mtc-packagename",
-	"version": "3.0.0",
+	"name": "disguise-multi-transport-control",
+	"version": "2.2.0",
 	"main": "index.js",
 	"type": "module",
 	"scripts": {

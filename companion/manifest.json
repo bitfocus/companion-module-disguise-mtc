@@ -3,7 +3,7 @@
 	"name": "disguise-multi-transport-control",
 	"shortname": "disguise-mtc",
 	"description": "Disguise Multi-Transport Control",
-	"version": "3.0.0",
+	"version": "2.2.0",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-disguise-mtc.git",
 	"bugs": "https://github.com/bitfocus/companion-module-disguise-mtc/issues",
