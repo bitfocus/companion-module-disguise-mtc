@@ -20,7 +20,6 @@ export class DisguiseMTC {
 		}
 	}
 
-
 	handleDeviceResponse(response) {
 		this.instance.log('debug', 'Parsing device response: ' + JSON.stringify(response))
 
@@ -35,16 +34,15 @@ export class DisguiseMTC {
 
 			if (response.results && Array.isArray(response.results)) {
 				if (queryType === 'playerList') {
-					let incomingPlayerList = response.results.map(item => item.player)
+					let incomingPlayerList = response.results.map((item) => item.player)
 					if (incomingPlayerList.length !== this.playerListData.length) {
 						this.playerListData = incomingPlayerList
 						this.instance.log('info', `Transports updated: ${JSON.stringify(this.playerListData)}`)
 					}
 
 					this.instance.initActions()
-				}
-				else if (queryType === 'trackList') {
-					let incomingTrackList = response.results.map(item => item.track)
+				} else if (queryType === 'trackList') {
+					let incomingTrackList = response.results.map((item) => item.track)
 					if (incomingTrackList.length !== this.trackListData.length) {
 						this.trackListData = incomingTrackList
 						this.instance.log('info', `Track list updated: ${JSON.stringify(this.trackListData)}`)
@@ -60,24 +58,25 @@ export class DisguiseMTC {
 					const trackName = queryType.split(':')[1]
 
 					const incomingSectionList = response.results
-						.map(item => item.location)
-						.filter(location => location && location.trim().length > 0)
+						.map((item) => item.location)
+						.filter((location) => location && location.trim().length > 0)
 
 					const existingSectionList = this.cueListData[trackName] || []
 
 					if (incomingSectionList.length !== existingSectionList.length) {
 						this.cueListData[trackName] = incomingSectionList
-						this.instance.log('info', `Section list updated for ${trackName}: ${incomingSectionList.length} sections - ${JSON.stringify(incomingSectionList)}`)
+						this.instance.log(
+							'info',
+							`Section list updated for ${trackName}: ${incomingSectionList.length} sections - ${JSON.stringify(incomingSectionList)}`,
+						)
 					}
 					this.instance.initActions()
 				}
 			}
-
 		} catch (error) {
 			this.instance.log('error', `Error parsing device response: ${error.message}`)
 		}
 	}
-
 
 	async getPlayerList() {
 		const requestId = this.requestCounter++
@@ -152,7 +151,10 @@ export class DisguiseMTC {
 				formattedCommand.track_command.transitionSection = transitionSectionName
 			} else {
 				// Fallback: treat the whole string as section name
-				this.instance.log('warn', `Transition section format invalid: "${transitionSection}". Expected "Track: Section"`)
+				this.instance.log(
+					'warn',
+					`Transition section format invalid: "${transitionSection}". Expected "Track: Section"`,
+				)
 				formattedCommand.track_command.transitionSection = transitionSection
 			}
 		}

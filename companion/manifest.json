@@ -2,19 +2,23 @@
 	"id": "disguise-mtc",
 	"name": "disguise-multi-transport-control",
 	"shortname": "disguise-mtc",
-	"description": "Disguise Multi-Transport Control",
+	"description": "Disguise Multi Transport Control",
 	"version": "2.2.0",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-disguise-mtc.git",
 	"bugs": "https://github.com/bitfocus/companion-module-disguise-mtc/issues",
 	"maintainers": [
 		{
-			"name": "William Viker",
-			"email": "william@bitfocus.io"
+			"name": "Aleksei Vlasov",
+			"email": "snapfiles@icloud.com"
 		},
 		{
 			"name": "Ted Charles Brown",
 			"email": "tedcharlesbrown@gmail.com"
+		},
+		{
+			"name": "William Viker",
+			"email": "william@bitfocus.io"
 		}
 	],
 	"legacyIds": [],
@@ -25,6 +29,6 @@
 		"entrypoint": "../index.js"
 	},
 	"manufacturer": "Disguise",
-	"products": ["Multi-Transport Control"],
-	"keywords": ["Media Server"]
+	"products": ["Disguise - Multi Transport Control"],
+	"keywords": ["Media Server", "D3", "Disguise"]
 }

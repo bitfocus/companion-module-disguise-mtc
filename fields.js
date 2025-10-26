@@ -5,14 +5,13 @@ const PLAY_MODES = [
 	{ id: 'stop', label: 'Stop' },
 ]
 
-
 function getPlayerChoices(instance) {
 	const players = instance.disguiseMTC.getCachedPlayerList()
 	if (players.length === 0) {
 		return [{ id: 'default', label: 'default (no data from device)' }]
 	}
 	const sorted = [...players].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
-	return sorted.map(player => ({ id: player, label: player }))
+	return sorted.map((player) => ({ id: player, label: player }))
 }
 
 function getTrackChoices(instance) {
@@ -21,35 +20,35 @@ function getTrackChoices(instance) {
 		return [{ id: '', label: '(no data from device)' }]
 	}
 	const sorted = [...tracks].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
-	return sorted.map(track => ({ id: track, label: track }))
+	return sorted.map((track) => ({ id: track, label: track }))
 }
 
 function getSectionChoices(instance) {
 	const trackList = instance.disguiseMTC.getCachedTrackList()
-	
+
 	if (trackList.length === 0) {
 		return [{ id: '', label: '(no tracks available)' }]
 	}
-	
+
 	const allSections = []
-	
+
 	for (const track of trackList) {
 		const sections = instance.disguiseMTC.getCachedCueList(track)
-		sections.forEach(section => {
+		sections.forEach((section) => {
 			const fullLabel = `${track}: ${section}`
 			allSections.push({
 				id: fullLabel,
-				label: fullLabel
+				label: fullLabel,
 			})
 		})
 	}
-	
+
 	if (allSections.length === 0) {
 		return [{ id: '', label: '(no sections available)' }]
 	}
-	
+
 	allSections.sort((a, b) => a.label.toLowerCase().localeCompare(b.label.toLowerCase()))
-	
+
 	return allSections
 }
 
@@ -57,14 +56,14 @@ export function getFieldDefinitions(instance) {
 	const playerChoices = getPlayerChoices(instance)
 	const trackChoices = getTrackChoices(instance)
 	const sectionChoices = getSectionChoices(instance)
-	
+
 	return [
 		{
 			type: 'dropdown',
 			label: 'Command',
 			id: 'command',
 			default: 'playSection',
-			choices: PLAY_MODES
+			choices: PLAY_MODES,
 		},
 		{
 			type: 'dropdown',
@@ -88,9 +87,9 @@ export function getFieldDefinitions(instance) {
 			type: 'textinput',
 			label: 'Target',
 			id: 'target',
-			tooltip: 'Format as CUE number (\'1\', \'1.2\', or \'1.2.3\') or Timecode (\'00:00:00:00\').',
+			tooltip: "Format as CUE number ('1', '1.2', or '1.2.3') or Timecode ('00:00:00:00').",
 			default: '1.0.0',
-			regex: '/^\\d+(\\.\\d+(\\.\\d+)?)?$|^\\d{2}:\\d{2}:\\d{2}:\\d{2}$/'
+			regex: '/^\\d+(\\.\\d+(\\.\\d+)?)?$|^\\d{2}:\\d{2}:\\d{2}:\\d{2}$/',
 		},
 		{
 			type: 'checkbox',
@@ -98,7 +97,7 @@ export function getFieldDefinitions(instance) {
 			tooltip: 'Broken in r30.8 and later',
 			id: 'useTimeCrossfade',
 			default: false,
-			isVisible: (options) => !options.useTrackCrossfade
+			isVisible: (options) => !options.useTrackCrossfade,
 		},
 		{
 			type: 'textinput',
@@ -106,7 +105,7 @@ export function getFieldDefinitions(instance) {
 			id: 'time',
 			default: '1',
 			regex: '/^\\d+(\\.\\d+)?$/',
-			isVisible: (options) => options.useTimeCrossfade
+			isVisible: (options) => options.useTimeCrossfade,
 		},
 		{
 			type: 'checkbox',
@@ -114,7 +113,7 @@ export function getFieldDefinitions(instance) {
 			tooltip: 'Broken in r30.8 and later',
 			id: 'useTrackCrossfade',
 			default: false,
-			isVisible: (options) => !options.useTimeCrossfade
+			isVisible: (options) => !options.useTimeCrossfade,
 		},
 		{
 			type: 'dropdown',
@@ -124,7 +123,7 @@ export function getFieldDefinitions(instance) {
 			default: sectionChoices[0]?.label || '',
 			choices: sectionChoices,
 			minChoicesForSearch: 1,
-			isVisible: (options) => options.useTrackCrossfade
+			isVisible: (options) => options.useTrackCrossfade,
 		},
 	]
 }

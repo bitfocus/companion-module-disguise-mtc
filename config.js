@@ -45,5 +45,5 @@ export const ConfigFields = [
 		default: 5000,
 		min: 0,
 		max: 60000,
-	}
+	},
 ]

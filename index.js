@@ -23,7 +23,7 @@ class DisguiseMultiTransport extends InstanceBase {
 
 	async configUpdated(config) {
 		this.log('info', 'Config updated - reconnecting...')
-		
+
 		if (this.socket) {
 			this.log('debug', 'Destroying existing socket')
 			this.socket.destroy()
@@ -41,7 +41,7 @@ class DisguiseMultiTransport extends InstanceBase {
 
 	async destroy() {
 		this.stopPolling()
-		
+
 		if (this.socket) {
 			this.socket.destroy()
 		} else {
@@ -68,7 +68,7 @@ class DisguiseMultiTransport extends InstanceBase {
 
 	async refreshSectionLists() {
 		const tracks = this.disguiseMTC.getCachedTrackList()
-		
+
 		if (tracks.length > 0) {
 			this.log('debug', `Requesting section lists for ${tracks.length} tracks`)
 			for (const track of tracks) {
@@ -112,33 +112,33 @@ class DisguiseMultiTransport extends InstanceBase {
 			this.log('info', `Connecting to ${this.config.host}:${this.config.port}`)
 			this.socket = new TCPHelper(this.config.host, this.config.port)
 
-		this.socket.on('status_change', (status, message) => {
-			this.updateStatus(status, message)
-			
-			if (status === InstanceStatus.Ok) {
-				this.refreshMTCData()
-				this.startPolling()
-			}
-		})
+			this.socket.on('status_change', (status, message) => {
+				this.updateStatus(status, message)
+
+				if (status === InstanceStatus.Ok) {
+					this.refreshMTCData()
+					this.startPolling()
+				}
+			})
 
 			this.socket.on('error', (err) => {
 				this.updateStatus(InstanceStatus.ConnectionFailure, err.message)
 				this.log('error', 'Network error: ' + err.message)
 			})
 
-		this.socket.on('data', (data) => {
-			this.receiveBuffer += data.toString()
+			this.socket.on('data', (data) => {
+				this.receiveBuffer += data.toString()
 
-			const lines = this.receiveBuffer.split('\n')
-			
-			this.receiveBuffer = lines.pop() || ''
+				const lines = this.receiveBuffer.split('\n')
 
-			for (const line of lines) {
-				if (line.trim().length === 0) continue
-				const jsonResponse = JSON.parse(line)
-				this.disguiseMTC.handleDeviceResponse(jsonResponse)
-			}
-		})
+				this.receiveBuffer = lines.pop() || ''
+
+				for (const line of lines) {
+					if (line.trim().length === 0) continue
+					const jsonResponse = JSON.parse(line)
+					this.disguiseMTC.handleDeviceResponse(jsonResponse)
+				}
+			})
 		} else {
 			this.updateStatus(InstanceStatus.BadConfig)
 		}
