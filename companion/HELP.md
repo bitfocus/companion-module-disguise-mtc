@@ -12,3 +12,9 @@ All commands are formatted in JSON and sent over the telnet protocol.
 2. Assign transport(s) to Multitransport Manager
 3. Assign tracks to transports or use the automatic setlist
 4. In the Multitransport Manager add an event transport and set its listening port
+
+## Warning
+
+This is a major update from the previous version. Upgrade at your own risk
+
+There are some issues in recent Disguise versions (R30.8) regarding sending transition time / track. Unfortunately, that feature is currently not working via MTC.
